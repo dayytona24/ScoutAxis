@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scout Axis — Competitive Fortnite Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080a;--bg2:#0d0f12;--surface:#111317;--surface2:#181c21;--surface3:#1e2228;
+  --border:#1f232b;--border2:#272d38;
+  --accent:#00c46a;--accent-dim:rgba(0,196,106,0.09);--accent-glow:rgba(0,196,106,0.22);--accent-hover:#00e07a;
+  --text:#eef0f3;--text2:#8c95a6;--muted:#465060;--gold:#f0b429;--red:#e8454a;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;line-height:1.6}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:.5
+}
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(7,8,10,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-mark{width:30px;height:30px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#000;flex-shrink:0}
+.nav-logo-text{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.nav-logo-text span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.2px;transition:color .15s}
+.nav-links a:hover{color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.btn-ng{padding:8px 18px;background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-radius:7px;text-decoration:none;transition:border-color .15s,color .15s}
+.btn-ng:hover{border-color:var(--accent);color:var(--accent)}
+.btn-ns{padding:8px 20px;background:var(--accent);border:none;color:#000;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;border-radius:7px;text-decoration:none;transition:background .15s,transform .1s}
+.btn-ns:hover{background:var(--accent-hover);transform:translateY(-1px)}
+@media(max-width:900px){.nav-links{display:none}}
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:100px 48px 80px;position:relative;overflow:hidden;text-align:center}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(0,196,106,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,196,106,.035) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse 90% 80% at 50% 50%,#000 20%,transparent 100%)}
+.hero-glow{position:absolute;width:900px;height:900px;left:50%;top:50%;transform:translate(-50%,-55%);background:radial-gradient(circle,rgba(0,196,106,.10) 0%,transparent 60%);pointer-events:none}
+.hero-inner{position:relative;max-width:880px;margin:0 auto}
+.hero-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;background:var(--accent-dim);border:1px solid rgba(0,196,106,.22);border-radius:20px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-bottom:30px}
+.hero-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,12vw,128px);line-height:.88;letter-spacing:3px;color:var(--text);margin-bottom:10px}
+.hero-h1 .g{color:var(--accent)}
+.hero-h1 .d{color:var(--muted)}
+.hero-sub{font-size:clamp(16px,2vw,19px);color:var(--text2);font-weight:500;max-width:580px;margin:0 auto 44px;line-height:1.65}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.btn-hm{padding:15px 40px;background:var(--accent);border:none;color:#000;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:.3px;cursor:pointer;border-radius:9px;text-decoration:none;transition:background .15s,transform .12s,box-shadow .15s;box-shadow:0 0 32px var(--accent-glow)}
+.btn-hm:hover{background:var(--accent-hover);transform:translateY(-2px);box-shadow:0 0 48px rgba(0,196,106,.4)}
+.btn-hg{padding:15px 40px;background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Syne',sans-serif;font-size:16px;font-weight:600;cursor:pointer;border-radius:9px;text-decoration:none;transition:border-color .15s,color .15s}
+.btn-hg:hover{border-color:var(--accent);color:var(--accent)}
+.hero-nums{display:flex;align-items:center;justify-content:center;margin-top:64px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;max-width:680px;margin-left:auto;margin-right:auto}
+.hero-num{flex:1;min-width:100px;padding:22px 16px;text-align:center;border-right:1px solid var(--border)}
+.hero-num:last-child{border-right:none}
+.hn-val{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--accent);line-height:1}
+.hn-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-family:'IBM Plex Mono',monospace;margin-top:4px}
+/* COMMON */
+.kicker{font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-bottom:12px}
+.sh{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,5vw,60px);letter-spacing:2px;line-height:.95;color:var(--text)}
+.sh .g{color:var(--accent)}
+.sh .d{color:var(--muted)}
+.ssub{font-size:16px;color:var(--text2);font-weight:500;line-height:1.65;margin-top:16px;max-width:540px}
+/* PREVIEW */
+.preview-wrap{padding:80px 48px;max-width:1280px;margin:0 auto}
+.preview-hdr{text-align:center;margin-bottom:48px}
+.mockup{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 48px 120px rgba(0,0,0,.7),0 0 80px rgba(0,196,106,.07)}
+.mockup-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 20px;display:flex;align-items:center;gap:7px}
+.dot{width:10px;height:10px;border-radius:50%}
+.mockup-url{flex:1;text-align:center;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.mockup-layout{display:grid;grid-template-columns:210px 1fr;min-height:420px}
+.mockup-sb{background:var(--surface);border-right:1px solid var(--border);padding:16px 0}
+.mockup-sb-logo{padding:12px 18px 16px;border-bottom:1px solid var(--border);margin-bottom:10px;font-weight:800;font-size:15px;color:var(--text)}
+.mockup-sb-logo span{color:var(--accent)}
+.m-nav{padding:9px 20px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:9px;font-weight:600}
+.m-nav.on{color:var(--accent);background:var(--accent-dim)}
+.m-nav-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.7;flex-shrink:0}
+.mockup-main{padding:24px}
+.m-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px}
+.m-stat{background:var(--surface2);padding:15px 16px}
+.m-sv{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--accent);line-height:1}
+.m-sl{font-size:11px;color:var(--muted);margin-top:3px;font-family:'IBM Plex Mono',monospace}
+.m-table{background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.m-row{display:grid;grid-template-columns:36px 1fr 70px 80px 60px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;align-items:center}
+.m-row:last-child{border-bottom:none}
+.m-row.hdr{background:var(--surface3);font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+.m-rk{color:var(--accent);font-weight:700;font-family:'IBM Plex Mono',monospace}
+.m-nm{font-weight:700;color:var(--text);font-size:13px}
+.ts{background:#f0b429;color:#000;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;font-family:'IBM Plex Mono',monospace}
+.ta{background:rgba(192,132,252,.15);color:#c084fc;border:1px solid rgba(192,132,252,.25);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.m-pg{color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600}
+.m-pm{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:12px}
+/* FEATURES */
+.features-wrap{padding:100px 48px;max-width:1280px;margin:0 auto}
+.features-hdr{margin-bottom:56px}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+@media(max-width:960px){.feat-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.feat-grid{grid-template-columns:1fr}}
+.feat{background:var(--surface);padding:38px 34px;transition:background .15s}
+.feat:hover{background:var(--surface2)}
+.feat-icon{width:46px;height:46px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(0,196,106,.2);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px}
+.feat-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:9px;letter-spacing:-.2px}
+.feat-desc{font-size:14px;color:var(--text2);line-height:1.7;font-weight:500}
+/* HOW */
+.how-wrap{padding:100px 48px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.how-inner{max-width:1100px;margin:0 auto}
+.how-hdr{text-align:center;margin-bottom:64px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+@media(max-width:800px){.steps{grid-template-columns:1fr 1fr}}
+.step{background:var(--bg2);padding:36px 28px;position:relative}
+.step-n{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--border2);line-height:1;position:absolute;top:20px;right:22px;user-select:none}
+.step-icon{width:44px;height:44px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(0,196,106,.2);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px}
+.step-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px}
+.step-desc{font-size:13px;color:var(--text2);line-height:1.65;font-weight:500}
+/* DATA */
+.data-wrap{padding:100px 48px;max-width:1280px;margin:0 auto}
+.data-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+@media(max-width:900px){.data-inner{grid-template-columns:1fr;gap:48px}}
+.data-metrics{display:flex;flex-direction:column;gap:12px;margin-top:32px}
+.dm{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:10px;transition:border-color .15s}
+.dm:hover{border-color:rgba(0,196,106,.25)}
+.dm-bullet{width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:5px}
+.dm-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.dm-desc{font-size:13px;color:var(--text2);line-height:1.55;font-weight:500}
+.dc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 22px}
+.dc.hi{border-color:rgba(0,196,106,.3);background:rgba(0,196,106,.04)}
+.dc-num{font-family:'Bebas Neue',sans-serif;font-size:46px;color:var(--accent);line-height:1}
+.dc-lbl{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.4;font-weight:500}
+/* TESTIMONIALS */
+.testi-wrap{padding:100px 48px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.testi-inner{max-width:1280px;margin:0 auto}
+.testi-hdr{text-align:center;margin-bottom:56px}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.testi-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.testi-grid{grid-template-columns:1fr}}
+.tcard{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:30px;transition:border-color .15s,transform .15s}
+.tcard:hover{border-color:rgba(0,196,106,.28);transform:translateY(-3px)}
+.tcard-stars{display:flex;gap:2px;margin-bottom:16px;color:var(--gold);font-size:14px}
+.tcard-quote{font-size:14px;color:var(--text2);line-height:1.72;font-style:italic;font-weight:500;margin-bottom:22px}
+.tcard-author{display:flex;align-items:center;gap:12px}
+.tcard-ava{width:38px;height:38px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(0,196,106,.2);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--accent);flex-shrink:0}
+.tcard-name{font-size:13px;font-weight:700;color:var(--text)}
+.tcard-role{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+/* PRICING */
+.pricing-wrap{padding:100px 48px}
+.pricing-inner{max-width:900px;margin:0 auto}
+.pricing-hdr{text-align:center}
+.billing-row{display:flex;align-items:center;justify-content:center;gap:12px;margin:36px 0 48px}
+.b-lbl{font-size:14px;color:var(--text2);font-weight:600}
+.toggle-btn{width:48px;height:26px;border-radius:13px;border:none;background:var(--border2);position:relative;cursor:pointer;transition:background .2s;outline:none}
+.toggle-btn.on{background:var(--accent)}
+.toggle-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle-btn.on .toggle-knob{left:25px}
+.save-chip{padding:3px 10px;background:rgba(0,196,106,.12);border:1px solid rgba(0,196,106,.28);border-radius:20px;font-size:11px;font-weight:700;color:var(--accent);font-family:'IBM Plex Mono',monospace}
+.plans{display:grid;grid-template-columns:1fr 1.08fr;gap:20px}
+@media(max-width:700px){.plans{grid-template-columns:1fr}}
+.plan{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:38px;position:relative;transition:transform .15s}
+.plan:hover{transform:translateY(-2px)}
+.plan.featured{border-color:rgba(0,196,106,.38);background:linear-gradient(150deg,rgba(0,196,106,.05),var(--surface));box-shadow:0 0 48px rgba(0,196,106,.1)}
+.plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);padding:4px 16px;background:var(--accent);color:#000;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;border-radius:20px;font-family:'IBM Plex Mono',monospace;white-space:nowrap}
+.plan-tier{font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:14px}
+.plan-price{display:flex;align-items:baseline;gap:4px;margin-bottom:6px}
+.plan-cur{font-size:22px;color:var(--text2);margin-top:10px;align-self:flex-start}
+.plan-amt{font-family:'Bebas Neue',sans-serif;font-size:58px;line-height:1;color:var(--text)}
+.plan-per{font-size:14px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.plan-desc{font-size:14px;color:var(--text2);line-height:1.62;margin-bottom:28px;min-height:48px;font-weight:500}
+.plan-feats{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.pf{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text2);font-weight:500}
+.pf-y{width:18px;height:18px;border-radius:50%;flex-shrink:0;background:var(--accent-dim);border:1px solid rgba(0,196,106,.28);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--accent)}
+.pf-n{width:18px;height:18px;border-radius:50%;flex-shrink:0;background:var(--surface3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}
+.btn-plan{width:100%;padding:14px;border-radius:8px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.2px}
+.btn-pg{background:none;border:1px solid var(--border2);color:var(--text2)}
+.btn-pg:hover{border-color:var(--accent);color:var(--accent)}
+.btn-ps{background:var(--accent);border:none;color:#000;box-shadow:0 0 24px rgba(0,196,106,.28)}
+.btn-ps:hover{background:var(--accent-hover);box-shadow:0 0 36px rgba(0,196,106,.4)}
+.pricing-note{text-align:center;margin-top:22px;font-size:12px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.6}
+/* FAQ */
+.faq-wrap{padding:100px 48px;background:var(--surface);border-top:1px solid var(--border)}
+.faq-inner{max-width:760px;margin:0 auto}
+.faq-hdr{text-align:center;margin-bottom:56px}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;background:none;border:none;color:var(--text);font-family:'Syne',sans-serif;font-size:16px;font-weight:600;padding:22px 0;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:color .15s}
+.faq-q:hover{color:var(--accent)}
+.faq-icon{font-size:20px;color:var(--muted);transition:transform .22s,color .15s;flex-shrink:0;line-height:1}
+.faq-item.open .faq-icon{transform:rotate(45deg);color:var(--accent)}
+.faq-body{font-size:14px;color:var(--text2);line-height:1.72;font-weight:500;padding-bottom:22px;display:none}
+.faq-item.open .faq-body{display:block}
+/* CTA */
+.cta-band{padding:100px 48px;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(0,196,106,.07) 0%,var(--bg) 60%);text-align:center}
+.cta-band::before{content:'';position:absolute;inset:0;border-top:1px solid rgba(0,196,106,.14);border-bottom:1px solid rgba(0,196,106,.14)}
+.cta-inner{max-width:700px;margin:0 auto;position:relative}
+.cta-sub{font-size:16px;color:var(--text2);font-weight:500;line-height:1.65;margin:18px auto 36px;max-width:500px}
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:64px 48px 40px}
+.foot-grid{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;gap:56px}
+@media(max-width:900px){.foot-grid{grid-template-columns:1fr 1fr;gap:36px}}
+.foot-logo{font-size:20px;font-weight:800;color:var(--text);margin-bottom:12px}
+.foot-logo span{color:var(--accent)}
+.foot-tag{font-size:13px;color:var(--muted);line-height:1.65;max-width:220px;font-weight:500}
+.foot-col-title{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-bottom:16px}
+.foot-links{display:flex;flex-direction:column;gap:10px}
+.foot-links a{font-size:13px;color:var(--text2);text-decoration:none;font-weight:500;transition:color .15s}
+.foot-links a:hover{color:var(--accent)}
+.foot-bottom{max-width:1280px;margin:40px auto 0;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.foot-copy{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
+.reveal.in{opacity:1;transform:none}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:500px;overflow:hidden;animation:popModal .28s cubic-bezier(.34,1.4,.64,1)}
+@keyframes popModal{from{opacity:0;transform:scale(.95) translateY(16px)}to{opacity:1;transform:none}}
+.modal-head{padding:26px 30px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:19px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.modal-x{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;border-radius:4px;transition:color .1s}
+.modal-x:hover{color:var(--text)}
+.modal-body-inner{padding:30px}
+.order-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:22px}
+.order-line{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--text2);padding:5px 0;font-weight:500}
+.order-line.total{border-top:1px solid var(--border);margin-top:10px;padding-top:14px;font-size:16px;font-weight:700;color:var(--text)}
+.order-line.total .oval{color:var(--accent);font-weight:800}
+.form-g{margin-bottom:15px}
+.form-lbl{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:.4px}
+.form-inp{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:11px 14px;font-family:'Syne',sans-serif;font-size:14px;font-weight:500;border-radius:8px;outline:none;transition:border-color .15s}
+.form-inp:focus{border-color:var(--accent)}
+.form-inp::placeholder{color:var(--muted)}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card-badges{display:flex;gap:6px;margin-bottom:14px}
+.cb{padding:4px 9px;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0 16px}
+.modal-err{background:rgba(232,69,74,.1);border:1px solid rgba(232,69,74,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:12px;display:none;font-weight:600}
+.btn-submit{width:100%;padding:14px;background:var(--accent);border:none;color:#000;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;cursor:pointer;border-radius:9px;transition:background .15s;box-shadow:0 0 24px rgba(0,196,106,.28);margin-top:6px}
+.btn-submit:hover{background:var(--accent-hover)}
+.btn-submit:disabled{background:var(--surface3);color:var(--muted);cursor:not-allowed;box-shadow:none}
+.co-note{font-size:12px;color:var(--muted);text-align:center;margin-top:11px;line-height:1.55}
+.co-note b{color:var(--accent)}
+.spin{display:inline-block;width:16px;height:16px;vertical-align:middle;margin-right:7px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:rot .55s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+/* success */
+.success-view{padding:40px 30px;text-align:center}
+.success-ring{width:68px;height:68px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 22px;animation:popIn .4s cubic-bezier(.34,1.6,.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-title{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:2px;color:var(--text);margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--text2);line-height:1.65;margin-bottom:24px;font-weight:500}
+.creds-box{background:var(--bg);border:1px solid rgba(0,196,106,.28);border-radius:10px;padding:18px;margin-bottom:22px;text-align:left}
+.cred-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.cred-row:last-child{border-bottom:none}
+.cred-key{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.5px}
+.cred-val{color:var(--accent);font-weight:700;font-family:'IBM Plex Mono',monospace}
+.btn-go{display:block;width:100%;padding:14px;background:var(--accent);border:none;color:#000;font-family:'Syne',sans-serif;font-size:15px;font-weight:800;cursor:pointer;border-radius:9px;text-decoration:none;text-align:center;transition:background .15s}
+.btn-go:hover{background:var(--accent-hover)}
+</style>
+</head>
+<body>
+<!-- ════════════════════════════════════════════════════════
+     SCOUT AXIS CONFIG — edit these values before deploying
+     ════════════════════════════════════════════════════════ -->
+<script>
+  // Your Stripe publishable key (pk_live_... or pk_test_...)
+  window.__STRIPE_PK__           = 'pk_test_REPLACE_ME';
+
+  // Your backend URL (the Node.js server from server.js)
+  window.__BACKEND_URL__         = 'https://your-backend.example.com';
+
+  // Stripe Price IDs from your Stripe dashboard
+  window.__PRICE_SCOUT_MONTHLY__ = 'price_REPLACE_SCOUT_MONTHLY';
+  window.__PRICE_SCOUT_ANNUAL__  = 'price_REPLACE_SCOUT_ANNUAL';
+  window.__PRICE_PRO_MONTHLY__   = 'price_REPLACE_PRO_MONTHLY';
+  window.__PRICE_PRO_ANNUAL__    = 'price_REPLACE_PRO_ANNUAL';
+</script>
+
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">SA</div>
+    <div class="nav-logo-text"><span>Scout</span> Axis</div>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#metrics">Metrics</a>
+    <a href="#testimonials">Reviews</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div class="nav-right">
+    <a href="scout-axis-redesign.html" class="btn-ng">Sign In</a>
+    <a href="#pricing" class="btn-ns">Get Access →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-pill"><span class="hero-pill-dot"></span>Competitive Fortnite Intelligence</div>
+    <h1 class="hero-h1">KNOW EVERY<br><span class="g">PLAYER.</span><br><span class="d">WIN EVERY</span> PICKUP.</h1>
+    <p class="hero-sub">The most advanced Fortnite scouting platform. Power scores, momentum tracking, regression detection, and H2H analysis — everything a serious scout needs, live.</p>
+    <div class="hero-actions">
+      <a href="#pricing" class="btn-hm">Start for $29/mo →</a>
+      <a href="#features" class="btn-hg">See all features</a>
+    </div>
+    <div class="hero-nums">
+      <div class="hero-num"><div class="hn-val">1000</div><div class="hn-lbl">Power Scale</div></div>
+      <div class="hero-num"><div class="hn-val">16+</div><div class="hn-lbl">Stats Per Player</div></div>
+      <div class="hero-num"><div class="hn-val">6+</div><div class="hn-lbl">Regions Tracked</div></div>
+      <div class="hero-num"><div class="hn-val">Live</div><div class="hn-lbl">Real-Time Sync</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PREVIEW -->
+<div class="preview-wrap">
+  <div class="preview-hdr reveal">
+    <div class="kicker">Live Dashboard</div>
+    <h2 class="sh">THE FULL <span class="g">PICTURE</span></h2>
+  </div>
+  <div class="mockup reveal">
+    <div class="mockup-bar">
+      <div class="dot" style="background:#ff5f57"></div>
+      <div class="dot" style="background:#febc2e;margin-left:5px"></div>
+      <div class="dot" style="background:#28c840;margin-left:5px"></div>
+      <div class="mockup-url">scout-axis · Rankings · NAE Region</div>
+    </div>
+    <div class="mockup-layout">
+      <div class="mockup-sb">
+        <div class="mockup-sb-logo"><span>Scout</span> Axis</div>
+        <div class="m-nav on"><span class="m-nav-dot"></span>Rankings</div>
+        <div class="m-nav"><span class="m-nav-dot"></span>Event Log</div>
+        <div class="m-nav"><span class="m-nav-dot"></span>Breakdown</div>
+        <div class="m-nav"><span class="m-nav-dot"></span>Watchlist</div>
+        <div class="m-nav"><span class="m-nav-dot"></span>Compare</div>
+      </div>
+      <div class="mockup-main">
+        <div class="m-stats">
+          <div class="m-stat"><div class="m-sv">250</div><div class="m-sl">RANKED</div></div>
+          <div class="m-stat"><div class="m-sv">32</div><div class="m-sl">EVENTS</div></div>
+          <div class="m-stat"><div class="m-sv">13</div><div class="m-sl">S-TIER</div></div>
+          <div class="m-stat" style="background:rgba(0,196,106,.04)"><div class="m-sv">Rapid</div><div class="m-sl" style="color:var(--accent)">NAE · 985.6 PWR</div></div>
+        </div>
+        <div class="m-table">
+          <div class="m-row hdr"><span>#</span><span>Player</span><span>Tier</span><span>Power</span><span>Evts</span></div>
+          <div class="m-row"><span class="m-rk">1</span><span class="m-nm">Rapid</span><span><span class="ts">S</span></span><span class="m-pg">985.6</span><span class="m-pm">27</span></div>
+          <div class="m-row"><span class="m-rk">2</span><span class="m-nm">Ajerss</span><span><span class="ts">S</span></span><span class="m-pg">856.9</span><span class="m-pm">27</span></div>
+          <div class="m-row"><span class="m-rk">3</span><span class="m-nm">Muz</span><span><span class="ts">S</span></span><span class="m-pg">855.1</span><span class="m-pm">30</span></div>
+          <div class="m-row"><span class="m-rk" style="color:var(--muted)">4</span><span class="m-nm" style="color:var(--text2)">Pollo</span><span><span class="ta">A</span></span><span class="m-pm">851.7</span><span class="m-pm">28</span></div>
+          <div class="m-row"><span class="m-rk" style="color:var(--muted)">5</span><span class="m-nm" style="color:var(--text2)">Peterbot</span><span><span class="ta">A</span></span><span class="m-pm">840.8</span><span class="m-pm">28</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+<div class="features-wrap">
+  <div class="features-hdr reveal">
+    <div class="kicker">What You Get</div>
+    <h2 class="sh">BUILT FOR <span class="g">SCOUTS</span> <span class="d">WHO ARE</span> SERIOUS</h2>
+    <p class="ssub">Every tool designed around one question: who is the right player, right now?</p>
+  </div>
+  <div class="feat-grid reveal">
+    <div class="feat"><div class="feat-icon">📊</div><div class="feat-title">Power Rating System (0–1000)</div><div class="feat-desc">40% placement + 25% consistency + 15% peak + 10% finals + 5% volume. All recency-weighted so current form is reflected immediately — not buried under old results.</div></div>
+    <div class="feat"><div class="feat-icon">🚀</div><div class="feat-title">Prospect & Momentum Detection</div><div class="feat-desc">Hidden-value algorithm: momentum × ceiling × consistency × event trust × regression penalty. Find who's rising before their rank catches up to their actual trajectory.</div></div>
+    <div class="feat"><div class="feat-icon">⚖️</div><div class="feat-title">Head-to-Head Player Compare</div><div class="feat-desc">Side-by-side bar visualizations across every metric. H2H event records show who actually won when they shared a lobby — not just who has the bigger number in isolation.</div></div>
+    <div class="feat"><div class="feat-icon">🏆</div><div class="feat-title">Event Breakdown Leaderboard</div><div class="feat-desc">Full leaderboard for every tracked event showing HCRS rank, tier badge, percentile, elim stats, and power score in one view. Click any player to open their full scouting profile.</div></div>
+    <div class="feat"><div class="feat-icon">📉</div><div class="feat-title">Regression & Risk Detection</div><div class="feat-desc">Early vs. late season trajectory scoring. Four levels: Severe, Moderate, Mild, None — flagged automatically. Avoid signing someone whose best days are behind them.</div></div>
+    <div class="feat"><div class="feat-icon">👁️</div><div class="feat-title">Watchlist: Pre-Eligible Players</div><div class="feat-desc">Track players with 1–2 events who aren't rank-eligible yet. Monitor their best results and event progress bar as they build toward full ranking status.</div></div>
+  </div>
+</div>
+</section>
+
+<!-- HOW IT WORKS -->
+<div class="how-wrap">
+  <div class="how-inner">
+    <div class="how-hdr reveal"><div class="kicker">How It Works</div><h2 class="sh">FOUR STEPS TO <span class="g">FULL INTEL</span></h2></div>
+    <div class="steps reveal">
+      <div class="step"><div class="step-n">01</div><div class="step-icon">💳</div><div class="step-title">Subscribe</div><div class="step-desc">Choose a plan and complete checkout. Your viewer account is created instantly — no waiting, no manual approval from anyone.</div></div>
+      <div class="step"><div class="step-n">02</div><div class="step-icon">🔐</div><div class="step-title">Log In</div><div class="step-desc">Use the credentials shown at checkout to sign in to the Scout Axis dashboard immediately. One click from the confirmation screen.</div></div>
+      <div class="step"><div class="step-n">03</div><div class="step-icon">📡</div><div class="step-title">See Live Data</div><div class="step-desc">Rankings, event results, and metrics sync in real time. You always see the latest data the moment the admin pushes an update.</div></div>
+      <div class="step"><div class="step-n">04</div><div class="step-icon">🎯</div><div class="step-title">Scout Smarter</div><div class="step-desc">Use Power scores, Watchlist, Compare, and Breakdown together to make faster, more confident talent decisions than anyone watching VODs.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DATA METRICS -->
+<section id="metrics">
+<div class="data-wrap">
+  <div class="data-inner">
+    <div class="reveal">
+      <div class="kicker">Deep Metrics</div>
+      <h2 class="sh">EVERY NUMBER <span class="g">EXPLAINED</span></h2>
+      <p class="ssub">Scout Axis doesn't just surface numbers — every metric has a defined formula and a scouting purpose.</p>
+      <div class="data-metrics">
+        <div class="dm"><div class="dm-bullet"></div><div><div class="dm-title">Power Score (0–1000)</div><div class="dm-desc">40% Placement + 25% Consistency + 15% Peak + 10% Finals + 5% Volume. Recency-weighted — last 5 events matter more than the first.</div></div></div>
+        <div class="dm"><div class="dm-bullet"></div><div><div class="dm-title">Scout Score & Prospect Index</div><div class="dm-desc">Composite signal: momentum × ceiling × consistency × event trust. Penalised for regression. Surfaces players before their rank reflects their real trajectory.</div></div></div>
+        <div class="dm"><div class="dm-bullet"></div><div><div class="dm-title">Volatility & Regression</div><div class="dm-desc">Std dev of percentile scores (boom/bust index) + early vs. late season trend split. Four severity levels: None, Mild, Moderate, Severe.</div></div></div>
+        <div class="dm"><div class="dm-bullet"></div><div><div class="dm-title">Advanced Combat Stats</div><div class="dm-desc">Avg elims, damage, EPPG, PPPG, and EPS (elim performance score) — loaded per event where Osirion data is available.</div></div></div>
+      </div>
+    </div>
+    <div class="dc-grid reveal">
+      <div class="dc hi"><div class="dc-num">16</div><div class="dc-lbl">Tracked stats per player across rankings, performance, combat and scouting</div></div>
+      <div class="dc"><div class="dc-num">6+</div><div class="dc-lbl">Regions: NAC, NAE, NAW, EU, OCE, ASIA, ME, MENA, BR and more</div></div>
+      <div class="dc"><div class="dc-num">∞</div><div class="dc-lbl">Events — import as many leaderboards as needed with no hard cap</div></div>
+      <div class="dc hi"><div class="dc-num">Live</div><div class="dc-lbl">Real-time Supabase sync — all viewers see updates the instant they happen</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+<div class="testi-wrap">
+  <div class="testi-inner">
+    <div class="testi-hdr reveal"><div class="kicker">What Scouts Say</div><h2 class="sh">TRUSTED BY <span class="g">THE SCENE</span></h2></div>
+    <div class="testi-grid reveal">
+      <div class="tcard"><div class="tcard-stars">★★★★★</div><p class="tcard-quote">Scout Axis changed how we evaluate talent. The Power score formula is more reliable than VOD review — it catches patterns humans miss across a whole season of results.</p><div class="tcard-author"><div class="tcard-ava">RK</div><div><div class="tcard-name">Rogue_Kade</div><div class="tcard-role">Esports Analyst · NAE</div></div></div></div>
+      <div class="tcard"><div class="tcard-stars">★★★★★</div><p class="tcard-quote">Regression detection saved us from signing a player who looked great on surface stats but was trending hard in the wrong direction. That feature alone is worth the price.</p><div class="tcard-author"><div class="tcard-ava">VX</div><div><div class="tcard-name">VortexScout</div><div class="tcard-role">Talent Scout · EU</div></div></div></div>
+      <div class="tcard"><div class="tcard-stars">★★★★★</div><p class="tcard-quote">Watchlist is underrated. Found two players who went on to win regionals just from watching their progress bar tick up. No other Fortnite scouting tool even comes close to this.</p><div class="tcard-author"><div class="tcard-ava">ML</div><div><div class="tcard-name">Melo_FN</div><div class="tcard-role">Independent Scout · NAC</div></div></div></div>
+      <div class="tcard"><div class="tcard-stars">★★★★★</div><p class="tcard-quote">H2H compare is insane for eval calls. Seeing who actually won when they shared a lobby gives real context that raw stat spreadsheets never could. Game changer for me.</p><div class="tcard-author"><div class="tcard-ava">ZR</div><div><div class="tcard-name">Z_Recruit</div><div class="tcard-role">Coach · NAW</div></div></div></div>
+      <div class="tcard"><div class="tcard-stars">★★★★★</div><p class="tcard-quote">Real-time sync means our whole team sees the same rankings update simultaneously. No more "which spreadsheet is current" — everyone is always on the same page, always.</p><div class="tcard-author"><div class="tcard-ava">AS</div><div><div class="tcard-name">ArcScout</div><div class="tcard-role">Team Manager · OCE</div></div></div></div>
+      <div class="tcard"><div class="tcard-stars">★★★★★</div><p class="tcard-quote">Event Breakdown is the feature I use most every week. Every player's rank, tier, percentile and power in one event context — exactly what a proper scout report should look like.</p><div class="tcard-author"><div class="tcard-ava">TN</div><div><div class="tcard-name">TalentNet_FN</div><div class="tcard-role">Professional Scout · EU</div></div></div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+<div class="pricing-wrap">
+  <div class="pricing-inner">
+    <div class="pricing-hdr reveal">
+      <div class="kicker">Pricing</div>
+      <h2 class="sh">SIMPLE. <span class="g">TRANSPARENT.</span></h2>
+    </div>
+    <div class="billing-row">
+      <span class="b-lbl">Monthly</span>
+      <button class="toggle-btn" id="billing-btn" onclick="toggleBilling()"><div class="toggle-knob"></div></button>
+      <span class="b-lbl">Annual</span>
+      <span class="save-chip">Save 20%</span>
+    </div>
+    <div class="plans reveal">
+      <div class="plan">
+        <div class="plan-tier">Scout</div>
+        <div class="plan-price"><span class="plan-cur">$</span><span class="plan-amt" id="p-scout">29</span><span class="plan-per" id="pp-scout">/mo</span></div>
+        <p class="plan-desc">Full dashboard access. Ideal for independent scouts covering one or two regions.</p>
+        <div class="plan-feats">
+          <div class="pf"><span class="pf-y">✓</span> Full rankings dashboard</div>
+          <div class="pf"><span class="pf-y">✓</span> All 16 player metrics</div>
+          <div class="pf"><span class="pf-y">✓</span> Event Breakdown view</div>
+          <div class="pf"><span class="pf-y">✓</span> Watchlist & prospects</div>
+          <div class="pf"><span class="pf-y">✓</span> H2H player compare</div>
+          <div class="pf"><span class="pf-y">✓</span> Real-time sync</div>
+          <div class="pf"><span class="pf-n">✗</span><span style="color:var(--muted)">Excel export</span></div>
+          <div class="pf"><span class="pf-n">✗</span><span style="color:var(--muted)">Snapshot tracking</span></div>
+        </div>
+        <button class="btn-plan btn-pg" onclick="openCheckout('scout')">Get Scout Access</button>
+      </div>
+      <div class="plan featured">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-tier" style="color:var(--accent)">Pro Scout</div>
+        <div class="plan-price"><span class="plan-cur">$</span><span class="plan-amt" id="p-pro">49</span><span class="plan-per" id="pp-pro">/mo</span></div>
+        <p class="plan-desc">Everything in Scout plus export tools, snapshot tracking, and priority support. For organizations.</p>
+        <div class="plan-feats">
+          <div class="pf"><span class="pf-y">✓</span> Everything in Scout</div>
+          <div class="pf"><span class="pf-y">✓</span> Excel export (.xlsx)</div>
+          <div class="pf"><span class="pf-y">✓</span> Snapshot & movement tracking</div>
+          <div class="pf"><span class="pf-y">✓</span> All regions unlocked</div>
+          <div class="pf"><span class="pf-y">✓</span> Priority support</div>
+          <div class="pf"><span class="pf-y">✓</span> Early feature access</div>
+          <div class="pf"><span class="pf-y">✓</span> Cancel anytime</div>
+          <div class="pf"><span class="pf-y">✓</span> 7-day free trial</div>
+        </div>
+        <button class="btn-plan btn-ps" onclick="openCheckout('pro')">Get Pro Access</button>
+      </div>
+    </div>
+    <p class="pricing-note">All plans include a 7-day free trial · Cancel before trial ends, pay nothing<br>Account auto-deactivates if subscription lapses · Reactivates immediately on renewal</p>
+  </div>
+</div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+<div class="faq-wrap">
+  <div class="faq-inner">
+    <div class="faq-hdr reveal"><div class="kicker">Questions</div><h2 class="sh">FAQ</h2></div>
+    <div class="reveal">
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does access work after payment?<span class="faq-icon">+</span></button><div class="faq-body">After completing checkout, your credentials are shown on-screen and you can log in immediately — no waiting, no manual approval. Your account stays active as long as your subscription is current. If payment lapses or you cancel, your account is automatically deactivated at the end of the billing period.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What happens if I miss a payment or cancel?<span class="faq-icon">+</span></button><div class="faq-body">If your subscription lapses — cancelled or failed payment — your account is deactivated at the end of your current paid period. Your data isn't deleted. Resubscribe at any time and your account is immediately reactivated with full access restored.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Can I share my account with my team?<span class="faq-icon">+</span></button><div class="faq-body">Each subscription is one viewer account. The dashboard is inherently shared — all viewers see the same live data managed by the admin. If your team needs multiple individual accounts, contact us for team pricing.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Where does the scouting data come from?<span class="faq-icon">+</span></button><div class="faq-body">Rankings and event data are imported from fortnitetracker.com leaderboards by the Scout Axis admin. The scoring engine then processes placements, field sizes, tier weights, and recency to calculate all metrics. Data is as fresh as the last admin import.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Which regions are covered?<span class="faq-icon">+</span></button><div class="faq-body">All standard FNCS regions: NAC, NAE, NAW, EU, OCE, ASIA, ME, MENA, BR — plus any custom region the admin configures. Every region has fully independent rankings, metrics, and event tracking.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is there a free trial?<span class="faq-icon">+</span></button><div class="faq-body">Yes — all plans include a 7-day free trial. Your card is not charged until the 7 days are up. Cancel before the trial ends and you won't be charged anything at all.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Scout vs Pro Scout — what's the real difference?<span class="faq-icon">+</span></button><div class="faq-body">Scout gives full read access — all metrics, all pages, live sync. Pro Scout adds Excel export, snapshot and rank movement tracking across time, all regions unlocked, and priority support. If you're using this professionally or for a team, Pro is worth the extra.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- CTA -->
+<div class="cta-band">
+  <div class="cta-inner reveal">
+    <div class="kicker">Get Started Today</div>
+    <h2 class="sh" style="font-size:clamp(44px,6vw,72px)">STOP GUESSING.<br><span class="g">START SCOUTING.</span></h2>
+    <p class="cta-sub">Join scouts and organizations already using Scout Axis to find talent before it's obvious. 7-day free trial, cancel anytime.</p>
+    <a href="#pricing" class="btn-hm" style="display:inline-block">Start Free Trial →</a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-grid">
+    <div>
+      <div class="foot-logo"><span>Scout</span> Axis</div>
+      <div class="foot-tag">The competitive Fortnite intelligence platform for scouts, coaches, and organizations.</div>
+    </div>
+    <div>
+      <div class="foot-col-title">Product</div>
+      <div class="foot-links"><a href="#features">Features</a><a href="#metrics">Metrics</a><a href="#pricing">Pricing</a><a href="scout-axis-redesign.html">Dashboard Login</a></div>
+    </div>
+    <div>
+      <div class="foot-col-title">Support</div>
+      <div class="foot-links"><a href="#faq">FAQ</a><a href="#">Contact</a><a href="#">Changelog</a></div>
+    </div>
+    <div>
+      <div class="foot-col-title">Legal</div>
+      <div class="foot-links"><a href="#">Terms of Service</a><a href="#">Privacy Policy</a><a href="#">Refund Policy</a></div>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <div class="foot-copy">© 2025 Scout Axis. All rights reserved.</div>
+    <div class="foot-copy">Built for competitive Fortnite.</div>
+  </div>
+</footer>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Get Scout Access</div>
+      <button class="modal-x" onclick="closeCheckout()">✕</button>
+    </div>
+    <div id="modal-form">
+      <div class="modal-body-inner">
+        <div class="order-box">
+          <div class="order-line"><span>Plan</span><span id="ol-plan" style="font-weight:700;color:var(--text)">—</span></div>
+          <div class="order-line"><span>Billing</span><span id="ol-billing">Monthly</span></div>
+          <div class="order-line"><span>Free trial</span><span style="color:var(--accent);font-weight:700">7 days</span></div>
+          <div class="order-line total"><span>Due today</span><span class="oval">$0.00</span></div>
+        </div>
+        <div class="form-g"><label class="form-lbl">Email Address</label><input type="email" class="form-inp" id="co-email" placeholder="you@example.com"></div>
+        <div class="form-g"><label class="form-lbl">Choose a Username</label><input type="text" class="form-inp" id="co-user" placeholder="your_handle" maxlength="24" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_]/g,'')"></div>
+        <div class="form-g"><label class="form-lbl">Choose a Password</label><input type="password" class="form-inp" id="co-pass" placeholder="Minimum 8 characters"></div>
+        <hr class="divider">
+        <div class="card-badges"><span class="cb">VISA</span><span class="cb">MC</span><span class="cb">AMEX</span><span class="cb">PAYPAL</span></div>
+        <div class="form-g">
+          <label class="form-lbl">Card Details</label>
+          <div id="stripe-card-element" style="background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:13px 14px;transition:border-color .15s"></div>
+          <div id="stripe-card-errors" style="color:var(--red);font-size:12px;margin-top:6px;display:none"></div>
+        </div>
+        <div class="modal-err" id="co-err"></div>
+        <button class="btn-submit" id="co-btn" onclick="submitCheckout()">Start 7-Day Free Trial</button>
+        <p class="co-note">After 7 days you'll be charged <b id="co-after">$29/mo</b>. Cancel any time before for free. <b>Secure checkout.</b></p>
+      </div>
+    </div>
+    <div id="modal-success" style="display:none">
+      <div class="success-view">
+        <div class="success-ring">✓</div>
+        <div class="success-title">ACCESS GRANTED</div>
+        <p class="success-sub">Your Scout Axis account is live. Save these credentials — you'll need them to sign in to the dashboard.</p>
+        <div class="creds-box">
+          <div class="cred-row"><span class="cred-key">USERNAME</span><span class="cred-val" id="s-user">—</span></div>
+          <div class="cred-row"><span class="cred-key">PLAN</span><span class="cred-val" id="s-plan">—</span></div>
+          <div class="cred-row"><span class="cred-key">STATUS</span><span class="cred-val">Trial · 7 days free</span></div>
+          <div class="cred-row"><span class="cred-key">DASHBOARD</span><span class="cred-val" style="font-size:10px">scout-axis-redesign.html</span></div>
+        </div>
+        <a href="scout-axis-redesign.html" class="btn-go">Open Dashboard →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// ── CONFIG (must match dashboard exactly) ──
+const SUPABASE_URL = 'https://lduaqegdycfihsznwdhu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkdWFxZWdkeWNmaWhzem53ZGh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzOTE1NDksImV4cCI6MjA4Nzk2NzU0OX0.Ke16xfSmXBk4HC3TP2ZpAcZ6wJD-6nKLT0xuEqR5uEg';
+let _sb = null;
+function getSb(){if(!_sb)_sb=(window.supabase||window.Supabase).createClient(SUPABASE_URL,SUPABASE_KEY);return _sb;}
+
+// ── BILLING TOGGLE ──
+let annual = false;
+const prices = {scout:{mo:29,yr:23},pro:{mo:49,yr:39}};
+let activePlan = 'pro';
+function toggleBilling(){
+  annual=!annual;
+  document.getElementById('billing-btn').classList.toggle('on',annual);
+  document.getElementById('p-scout').textContent=annual?prices.scout.yr:prices.scout.mo;
+  document.getElementById('p-pro').textContent=annual?prices.pro.yr:prices.pro.mo;
+  document.getElementById('pp-scout').textContent=annual?'/mo*':'/mo';
+  document.getElementById('pp-pro').textContent=annual?'/mo*':'/mo';
+}
+
+// ── CHECKOUT ──
+function openCheckout(plan){ initStripe();
+  activePlan=plan;
+  const price=annual?prices[plan].yr:prices[plan].mo;
+  const label=plan==='pro'?'Pro Scout':'Scout';
+  document.getElementById('modal-title').textContent='Get '+label+' Access';
+  document.getElementById('ol-plan').textContent=label;
+  document.getElementById('ol-billing').textContent=annual?'Annual (billed yearly)':'Monthly';
+  document.getElementById('co-after').textContent='$'+price+'/'+(annual?'mo (billed annually)':'mo');
+  document.getElementById('co-err').style.display='none';
+  const btn=document.getElementById('co-btn');
+  btn.disabled=false;btn.textContent='Start 7-Day Free Trial';
+  document.getElementById('modal-form').style.display='block';
+  document.getElementById('modal-success').style.display='none';
+  document.getElementById('modal-bg').classList.add('open');
+  setTimeout(()=>document.getElementById('co-email').focus(),80);
+}
+function closeCheckout(){document.getElementById('modal-bg').classList.remove('open');}
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeCheckout();});
+
+// fmtCard/fmtExp removed — Stripe Elements handles formatting
+
+function showErr(msg){const el=document.getElementById('co-err');el.textContent=msg;el.style.display='block';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+
+// ── Stripe instance + card element (initialised when modal opens) ──
+let _stripe = null, _cardElement = null;
+
+function initStripe() {
+  if (_stripe) return;
+  const pubKey = window.__STRIPE_PK__ || 'pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY';
+  try {
+    _stripe = Stripe(pubKey);
+    const elements = _stripe.elements({
+      appearance: {
+        theme: 'night',
+        variables: {
+          colorPrimary:       '#00c46a',
+          colorBackground:    '#07080a',
+          colorText:          '#eef0f3',
+          colorDanger:        '#e8454a',
+          fontFamily:         'Syne, sans-serif',
+          borderRadius:       '8px',
+          spacingUnit:        '4px',
+        }
+      }
+    });
+    _cardElement = elements.create('card', {
+      style: {
+        base:    { color:'#eef0f3', '::placeholder':{ color:'#465060' }, fontSize:'14px' },
+        invalid: { color:'#e8454a' }
+      }
+    });
+    _cardElement.mount('#stripe-card-element');
+    _cardElement.on('change', e => {
+      const el = document.getElementById('stripe-card-errors');
+      if (e.error) { el.textContent = e.error.message; el.style.display='block'; }
+      else          { el.style.display='none'; }
+    });
+  } catch(e) {
+    console.warn('[Stripe] Could not init — publishable key not set?', e.message);
+  }
+}
+
+async function submitCheckout() {
+  const email    = document.getElementById('co-email').value.trim();
+  const username = document.getElementById('co-user').value.trim();
+  const password = document.getElementById('co-pass').value;
+
+  if (!email || !email.includes('@'))        return showErr('Please enter a valid email address.');
+  if (!username || username.length < 3)      return showErr('Username must be at least 3 characters.');
+  if (!/^[a-zA-Z0-9_]+$/.test(username))    return showErr('Username: letters, numbers, underscores only.');
+  if (!password || password.length < 8)      return showErr('Password must be at least 8 characters.');
+
+  document.getElementById('co-err').style.display = 'none';
+  const btn = document.getElementById('co-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Processing…';
+
+  try {
+    // Step 1: Pre-validate username/email uniqueness before charging
+    const users = await loadUsersRemote();
+    if (users.find(u => u.username.toLowerCase() === username.toLowerCase()))
+      throw new Error('Username already taken — please choose another.');
+    if (users.find(u => u.email && u.email.toLowerCase() === email.toLowerCase()))
+      throw new Error('An account with that email already exists. Try signing in.');
+
+    // Step 2: Create Stripe PaymentMethod from the card element
+    const BACKEND_URL = window.__BACKEND_URL__ || 'https://your-backend.example.com';
+    let stripeCustomerId = null, stripeSubscriptionId = null, stripeStatus = 'trial';
+
+    if (_stripe && _cardElement) {
+      // Create a PaymentMethod token — card data goes directly to Stripe, never your server
+      const { paymentMethod, error } = await _stripe.createPaymentMethod({
+        type: 'card',
+        card: _cardElement,
+        billing_details: { email, name: username }
+      });
+      if (error) throw new Error(error.message);
+
+      // Step 3: Send paymentMethod.id (not raw card numbers) to your backend
+      const priceId = annual
+        ? (activePlan === 'pro' ? (window.__PRICE_PRO_ANNUAL__    || 'price_pro_annual_REPLACE')
+                                : (window.__PRICE_SCOUT_ANNUAL__  || 'price_scout_annual_REPLACE'))
+        : (activePlan === 'pro' ? (window.__PRICE_PRO_MONTHLY__   || 'price_pro_monthly_REPLACE')
+                                : (window.__PRICE_SCOUT_MONTHLY__ || 'price_scout_monthly_REPLACE'));
+
+      if (!BACKEND_URL.includes('your-backend.example.com')) {
+        const res = await fetch(BACKEND_URL + '/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, username, priceId, paymentMethodId: paymentMethod.id, trial_period_days: 7 })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Payment failed. Please check your card details.');
+        }
+        const data = await res.json();
+        stripeCustomerId     = data.customerId;
+        stripeSubscriptionId = data.subscriptionId;
+        stripeStatus         = data.status || 'trial';
+      } else {
+        // Backend not configured yet — dev/demo mode
+        console.warn('[Scout Axis] Backend not configured — demo mode. Set window.__BACKEND_URL__ to your server.');
+      }
+    } else {
+      // Stripe.js not loaded (no publishable key) — demo mode
+      console.warn('[Scout Axis] Stripe not initialised — demo mode. Set window.__STRIPE_PK__ to your publishable key.');
+    }
+
+    // Step 4: Create viewer account in Supabase
+    await createAccount(username, password, email, stripeCustomerId, stripeSubscriptionId, stripeStatus);
+
+    // Step 5: Show success
+    document.getElementById('s-user').textContent  = username;
+    document.getElementById('s-plan').textContent  = activePlan === 'pro' ? 'Pro Scout' : 'Scout';
+    document.getElementById('modal-form').style.display    = 'none';
+    document.getElementById('modal-success').style.display = 'block';
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = 'Start 7-Day Free Trial';
+    showErr(e.message || 'Something went wrong. Please try again.');
+  }
+}
+
+// ── CRYPTO — identical byte-for-byte with dashboard ──
+function genSalt(){const a=new Uint8Array(16);crypto.getRandomValues(a);return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function hashPw(pw,salt){
+  const enc=new TextEncoder();
+  const km=await crypto.subtle.importKey('raw',enc.encode(pw+salt),{name:'PBKDF2'},false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:100000,hash:'SHA-256'},km,256);
+  return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── CREATE ACCOUNT ──
+async function createAccount(username,password,email,stripeCustomerId,stripeSubscriptionId,stripeStatus,paymentMethodId){
+  const salt=genSalt();
+  const hash=await hashPw(password,salt);
+  const now=new Date().toISOString();
+  const trialEnd=new Date(Date.now()+7*24*60*60*1000).toISOString();
+  const newUser={
+    username,salt,hash,
+    role:'viewer',
+    email,
+    plan:activePlan==='pro'?'Pro Scout':'Scout',
+    subscriptionStatus: stripeStatus || 'trial',
+    subscribedAt:now,
+    trialEndsAt:trialEnd,
+    nextBillingDate:trialEnd,
+    stripeCustomerId: stripeCustomerId || null,
+    stripeSubscriptionId: stripeSubscriptionId || null,
+    active:true,
+    createdAt:now
+  };
+  // Load freshest user list from Supabase
+  let users=await loadUsersRemote();
+  if(users.find(u=>u.username.toLowerCase()===username.toLowerCase()))
+    throw new Error('Username already taken — please choose another.');
+  if(users.find(u=>u.email&&u.email.toLowerCase()===email.toLowerCase()))
+    throw new Error('An account with that email already exists. Try signing in.');
+  users.push(newUser);
+  // Persist to localStorage AND Supabase
+  localStorage.setItem('hcrs_users',JSON.stringify(users));
+  try{await getSb().from('hcrs_store').upsert({key:'hcrs_users',value:JSON.stringify(users)},{onConflict:'key'});}
+  catch(e){/* supabase failed — localStorage still set, dashboard will sync on next load */}
+}
+
+async function loadUsersRemote(){
+  try{
+    const{data}=await getSb().from('hcrs_store').select('value').eq('key','hcrs_users').maybeSingle();
+    if(data?.value){const u=JSON.parse(data.value);localStorage.setItem('hcrs_users',JSON.stringify(u));return u;}
+  }catch(e){}
+  try{return JSON.parse(localStorage.getItem('hcrs_users')||'[]');}catch(e){return[];}
+}
+
+// ── FAQ ──
+function toggleFaq(btn){
+  const item=btn.closest('.faq-item');
+  const open=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!open)item.classList.add('open');
+}
+
+// ── SCROLL REVEAL ──
+const ro=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target);}});
+},{threshold:0.08,rootMargin:'0px 0px -32px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>{
+  ro.observe(el);
+  let d=0;
+  el.querySelectorAll('.feat,.tcard,.step,.dm').forEach(c=>{c.style.transitionDelay=d+'s';d+=0.07;});
+});
+</script>
+</body>
+</html>
